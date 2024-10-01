@@ -10,6 +10,7 @@ from dwex.exprutil import ExprFormatter
 from .dwarfone import DWARFExprParserV1
 from .dwarfutil import *
 from .details import GenericTableModel, FixedWidthTableModel
+from .fundtype import *
 
 MAX_INLINE_BYTEARRAY_LEN = 32
 
@@ -150,7 +151,7 @@ class DIETableModel(QAbstractTableModel):
             cu = self.die.cu
             header = self.die.cu.header
             dwarf_version = self.die.cu.header.version
-
+			
             key = attr.name
             val = attr.value
             form = attr.form
@@ -170,6 +171,30 @@ class DIETableModel(QAbstractTableModel):
                     return '; '.join(self.dump_expr(ll.loc_expr))
                 else:
                     return "Loc list: 0x%x" % attr.value
+            elif key == "DW_AT_fund_type":
+                return "0x%x (%s)" % (val, DW_FT[val]) if val in DW_FT else val
+            elif key == "DW_AT_mod_fund_type":
+                ft = ''
+                ftv = 0
+                # find type str and its position
+                for v in reversed(val):
+                    if v != 0:
+                        ft = "%s" % (DW_FT[v]) if v in DW_FT else v
+                        ftv = v
+                        break                          
+                # find all mods until fund type pos and append it to a type
+                for v in val:
+                    if v == ftv:
+                        break
+                    ft = ft + "%s" % (DW_FT_MOD[v]) if v in DW_FT_MOD else v
+                ft = " (%s)" % ft
+                # now format to string as "hex bytes (fund type)"
+                if val == []: # format
+                    return '[]' + ft
+                elif isinstance(val[0], int):
+                    return ' '.join("%02x" % b for b in val) + ft
+                else:
+                    return str(val) + ft
             elif key == 'DW_AT_language':
                 return "%d %s" % (val, _DESCR_DW_LANG[val]) if val in _DESCR_DW_LANG else val
             elif key == 'DW_AT_encoding':

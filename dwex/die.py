@@ -97,7 +97,11 @@ class DIETableModel(QAbstractTableModel):
                 rt = self.ref_target_from_attr(attr)
                 if rt: 
                     (target_cu, target_offset) = rt
-                    target = target_cu.get_DIE_from_refaddr(target_offset)
+                    # NOTE: suppressing exception & crash of "CompileUnitV1 does not contain get_DIE_from_refaddr method"
+                    #		for now i change it to DIE_at_offset, idk how it should be
+                    #
+                    # target = target_cu.get_DIE_from_refaddr(target_offset)            					
+                    target = target_cu.DIE_at_offset(target_offset)
                     if target and not target.is_null():
                         tip = self.format_tag(target.tag) + ' ' + safe_DIE_name(target, '(unknown)') + '\n'
                 tip += "Double-click to follow"
